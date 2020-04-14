@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
+import GameView from '../views/GameView.vue'
 import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
@@ -7,13 +8,13 @@ Vue.use(VueRouter)
 const routes: Array<RouteConfig> = [
   {
     path: '/',
-    name: '',
+    name: 'Home',
     component: Home
   },
   {
     path: '/games/:gameId',
     name: 'Games',
-    component: Home
+    component: GameView
   }
 ]
 
