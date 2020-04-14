@@ -1,5 +1,11 @@
 <template>
   <div class="actions-list-component">
+    <md-list>
+      <md-subheader>Game Actions History</md-subheader>
+      <md-list-item v-for="(a, i) in actions" :key="(a , i)">
+          <span class="md-list-item-text">{{a.action}}</span>
+      </md-list-item>
+    </md-list>
 
   </div>
 </template>

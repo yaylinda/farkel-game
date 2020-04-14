@@ -26,12 +26,26 @@
           </md-card-header>
         </md-card>
 
-        <div class="md-layout">
-          <ObserversList class="md-layout-item" :observers="observers" :cookie="cookie"/>
+        <div class="md-layout md-gutter">
+          <ObserversList
+            class="md-layout-item" 
+            @joinGame="joinGame"
+            :actors="observers" 
+            :cookie="cookie"
+          />
 
-          <PlayersList class="md-layout-item" :players="players" :cookie="cookie"/>
+          <PlayersList 
+            class="md-layout-item" 
+            @readyToStart="readyToStart"
+            :actors="players" 
+            :cookie="cookie"
+          />
 
-          <ActionsList class="md-layout-item" :actions="actions" :cookie="cookie"/>
+          <ActionsList 
+            class="md-layout-item" 
+            :actions="actions" 
+            :cookie="cookie"
+          />
         </div>
 
         <ActionsBar />
@@ -42,7 +56,7 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { FARKLE_GAME_COOKIE, WAITING_GAME_PHASE } from "@/utilities/Constants";
+import { FARKLE_GAME_COOKIE, WAITING_GAME_PHASE, VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
 import { v4 as uuidv4 } from "uuid";
 import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
 import ActionsList from "@/components/ActionsList.vue";
@@ -89,13 +103,23 @@ export default class GameView extends Vue {
      return this.game.actionLogs;
   }
 
+  get me(): GameActor {
+    return this.game.cookiesMap[this.cookie];
+  }
+
+  get isGameMaster(): boolean {
+    return this.me.actorId === this.game.gameMasterPlayerId;
+  }
+
   get gameMasterStatement(): string {
-    const gameMasterId = this.game.gameMasterPlayerId;
-    const me = this.game.actorsMap[gameMasterId];
-    if (this.cookie === me.cookie) {
+    if (this.isGameMaster) {
       return 'You are the GameMaster';
     }
-    return me.displayName ? me.displayName : "???";
+
+    const gameMaster = this.game.actorsMap[this.game.gameMasterPlayerId];
+    const gameMasterDisplayName = gameMaster.displayName ? gameMaster.displayName : '???';
+
+    return `Your GameMaster is ${gameMasterDisplayName}`;
   }
 
   mounted() {
@@ -104,6 +128,15 @@ export default class GameView extends Vue {
     this.cookie = this._getOrSetCookie();
 
     this._getGameByGameIdAndCookieValue();
+  }
+
+  joinGame(actorId: string) {
+    console.log(`${LOGGING_CLASS_NAME} - joinGame handler, actorId: ${actorId}`);
+
+  }
+
+  readyToStart(actorId: string) {
+    console.log(`${LOGGING_CLASS_NAME} - readyToStart handler, actorId: ${actorId}`);
   }
 
   _getOrSetCookie(): string {

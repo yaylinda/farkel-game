@@ -1,28 +1,38 @@
 <template>
   <div class="observers-list-component">
+    <md-list>
+      <md-subheader>Game Observers</md-subheader>
 
-        <div class="md-title">Observers</div>
-        <div
-          class="md-subhead"
-        >People observing this Farkel Game</div>
+      <md-list-item v-if="amInList">
+        <md-icon>
+          <md-tooltip md-direction="top">You</md-tooltip>
+          <i class="fa fa-user"></i>
+        </md-icon>
+        <span class="md-list-item-text">You are currently an observer</span>
+        <md-button @click="joinGame" class="md-icon-button md-list-action">
+          <md-tooltip md-direction="top">Join Game</md-tooltip>
+          <md-icon class="md-primary">
+            <i class="fa fa-plus-circle"></i>
+          </md-icon>
+        </md-button>
+      </md-list-item>
 
-      <md-card-content>
-        <div>
-         <div v-if="isObserver">
-           You are currently observing this game. Press "Join" to play!
-         </div>
-        <div>
-          There are currently {{others.length}} other people observing this game.
-        </div>
-        </div>
-      </md-card-content>
-    </md-card>
+      <md-divider class="md-inset"></md-divider>
+
+      <md-list-item>
+        <md-icon>
+          <i class="fa fa-eye"></i>
+        </md-icon>
+        <span class="md-list-item-text">There are {{others.length}} other observers of this game</span>
+      </md-list-item>
+    </md-list>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Prop } from "vue-property-decorator";
 import { Game, GameActor } from "../model/game.model";
+import { VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
 
 @Component({
   components: {}
@@ -30,29 +40,25 @@ import { Game, GameActor } from "../model/game.model";
 export default class ObserversList extends Vue {
   LOGGING_CLASS_NAME: string = "[ObserversList]";
 
-  @Prop() observers!: GameActor[];
+  @Prop() actors!: GameActor[];
   @Prop() cookie!: string;
 
-  get isObserver(): boolean {
-    for (let o of this.observers) {
-      if (o.cookie === this.cookie) {
-        return true;
-      }
-    }
-    return false;
+  get amInList(): boolean {
+    return !!this.me;
+  }
+
+  get me(): GameActor | undefined {
+    return this.actors.find(a => a.cookie === this.cookie);
   }
 
   get others(): GameActor[] {
-    return this.observers.filter((o) => o.cookie !== this.cookie);
+    return this.actors.filter(a => a.cookie !== this.cookie);
   }
 
-  constructor() {
-    super();
-    console.log(`${this.LOGGING_CLASS_NAME} - constructor`);
-  }
-
-  isMe(observer: GameActor): boolean {
-    return observer.cookie === this.cookie;
+  joinGame(): void {
+    console.log("clicked join game");
+    console.log(this.me!.actorId);
+    this.$emit(VUE_EMITTED_ACTIONS.JOIN_GAME, this.me!.actorId);
   }
 }
 </script>

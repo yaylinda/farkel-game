@@ -16,6 +16,7 @@ export class Game {
     playersRoster!: string[] ;
     observersRoster!: string[] ;
     actorsMap!: Record<string, GameActor> ;
+    cookiesMap!: Record<string, GameActor> ;
     actionLogs!: GameActionLogEntry[] ;
     scoreToBeat!: number ;
     isAboutToWin!: boolean ;
