@@ -8,26 +8,33 @@
 
     <div class="game-content-section">
       <div v-if="loading" class="game-loading-spinner">
-        <md-progress-spinner 
-            :md-diameter="100" 
-            :md-stroke="10" 
-            md-mode="indeterminate"
-        />
+        <md-progress-spinner :md-diameter="100" :md-stroke="10" md-mode="indeterminate" />
       </div>
 
       <div v-if="!loading" class="game-data-section">
-          <md-card class="md-primary">
-      <md-card-header>
-        <md-card-header-text>
-          <div class="md-title">
-            <div>{{game.gameId}}</div>
-            <div>Game Phase: {{game.gamePhase}}</div>
-            </div>
-          <div class="md-subhead">Your Game Master is: {{gameMaster}}</div>
-        </md-card-header-text>
-        </md-card-header>
+        <md-card class="md-primary">
+          <md-card-header>
+            <md-card-header-text>
+              <div class="md-title">
+                <div>{{game.gameId}}</div>
+              </div>
+              <div class="md-subhead">
+                <div>Game Phase: {{game.gamePhase}}</div>
+                <div>{{gameMasterStatement}}</div>
+              </div>
+            </md-card-header-text>
+          </md-card-header>
         </md-card>
-         
+
+        <div class="md-layout">
+          <ObserversList class="md-layout-item" :observers="observers" :cookie="cookie"/>
+
+          <PlayersList class="md-layout-item" :players="players" :cookie="cookie"/>
+
+          <ActionsList class="md-layout-item" :actions="actions" :cookie="cookie"/>
+        </div>
+
+        <ActionsBar />
       </div>
     </div>
   </div>
@@ -35,23 +42,30 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import {FARKLE_GAME_COOKIE, WAITING_GAME_PHASE} from '../utilities/Constants';
+import { FARKLE_GAME_COOKIE, WAITING_GAME_PHASE } from "@/utilities/Constants";
 import { v4 as uuidv4 } from "uuid";
-import { Game } from "../model/game.model";
-import WaitingGame from '../components/WaitingGame.vue';
+import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
+import ActionsList from "@/components/ActionsList.vue";
+import ObserversList from "@/components/ObserversList.vue";
+import PlayersList from "@/components/PlayersList.vue";
+import ActionsBar from "@/components/ActionsBar.vue";
 
 const HOST: string = "http://localhost:8080/farkel-backend";
 const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
   components: {
-    WaitingGame
+    ActionsList,
+    ObserversList,
+    PlayersList, 
+    ActionsBar
   }
 })
 export default class GameView extends Vue {
   WAITING_PHASE_CONST: string = WAITING_GAME_PHASE;
 
-  game!: Game;
+  game: Game = new Game();
+  cookie: string = '';
   loading: boolean = true;
 
   get observers(): GameActor[] {
@@ -70,18 +84,26 @@ export default class GameView extends Vue {
     return players;
   }
 
-  get gameMaster(): string {
+  get actions(): GameActionLogEntry[] {
+     const actions: GameActionLogEntry[] = [];
+     return this.game.actionLogs;
+  }
+
+  get gameMasterStatement(): string {
     const gameMasterId = this.game.gameMasterPlayerId;
-    const displayName = this.game.actorsMap[gameMasterId].displayName;
-    return displayName ? displayName : '???';
+    const me = this.game.actorsMap[gameMasterId];
+    if (this.cookie === me.cookie) {
+      return 'You are the GameMaster';
+    }
+    return me.displayName ? me.displayName : "???";
   }
 
   mounted() {
     console.log(`${LOGGING_CLASS_NAME} - mounted`);
 
-    const cookie = this._getOrSetCookie();
+    this.cookie = this._getOrSetCookie();
 
-    this._getGameByGameIdAndCookieValue(cookie);
+    this._getGameByGameIdAndCookieValue();
   }
 
   _getOrSetCookie(): string {
@@ -99,17 +121,17 @@ export default class GameView extends Vue {
     return cookie;
   }
 
-  _getGameByGameIdAndCookieValue(cookie: string): void {
+  _getGameByGameIdAndCookieValue(): void {
     const url = `${HOST}/games/${this.$route.params.gameId}`;
 
     console.log(
-      `${LOGGING_CLASS_NAME} - getGameByGameIdAndCookieValue - calling url=${url}, with cookie=${cookie}`
+      `${LOGGING_CLASS_NAME} - getGameByGameIdAndCookieValue - calling url=${url}, with cookie=${this.cookie}`
     );
 
     this.$http
       .get(url, {
         headers: {
-          [FARKLE_GAME_COOKIE]: cookie
+          [FARKLE_GAME_COOKIE]: this.cookie
         }
       })
       .then(
