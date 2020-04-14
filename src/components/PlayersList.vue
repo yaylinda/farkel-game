@@ -9,11 +9,11 @@
 
         <div class="md-list-item-text">
           <span>{{me.displayName}} (You)</span>
-          <span>{{me.isPlayerReadyToStart ? 'Ready' : 'Not Ready'}}</span>
+          <span>{{me.playerReady ? 'Ready' : 'Not Ready'}}</span>
         </div>
 
-        <md-button :disabled="me.isPlayerReadyToStart" @click="readyToPlay" class="md-icon-button md-list-action">
-          <md-tooltip v-if="!me.isPlayerReadyToStart" md-direction="top">I'm ready to play!</md-tooltip>
+        <md-button v-if="!me.playerReady" @click="readyToPlay" class="md-icon-button md-list-action">
+          <md-tooltip md-direction="top">I'm ready to play!</md-tooltip>
           <md-icon class="md-primary">
             <i class="fa fa-play"></i>
           </md-icon>
@@ -27,7 +27,7 @@
 
         <div class="md-list-item-text">
           <span>{{p.displayName}}</span>
-          <span>{{p.isPlayerReadyToStart ? 'Ready' : 'Not Ready'}}</span>
+          <span>{{p.playerReady ? 'Ready' : 'Not Ready'}}</span>
         </div>
 
       </md-list-item>
@@ -62,7 +62,7 @@ export default class PlayersList extends Vue {
   }
 
   get numReady(): number {
-    return this.actors.filter(a => a.isPlayerReadyToStart).length;
+    return this.actors.filter(a => a.playerReady).length;
   }
 
   readyToPlay(): void {

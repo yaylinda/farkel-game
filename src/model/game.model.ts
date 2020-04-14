@@ -16,7 +16,6 @@ export class Game {
     playersRoster!: string[] ;
     observersRoster!: string[] ;
     actorsMap!: Record<string, GameActor> ;
-    cookiesMap!: Record<string, GameActor> ;
     actionLogs!: GameActionLogEntry[] ;
     scoreToBeat!: number ;
     isAboutToWin!: boolean ;
@@ -48,7 +47,7 @@ export class Die {
 export class GameActor {
     actorId!: string ;
     gameId!: string ;
-    isPlayerReadyToStart!: boolean ;
+    playerReady!: boolean ;
     cookie!: string ; 
     displayName!: string ;
     score!: number ;

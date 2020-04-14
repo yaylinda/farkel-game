@@ -106,12 +106,17 @@ export default class GameView extends Vue {
     return this.game.actionLogs;
   }
 
-  get me(): GameActor {
-    return this.game.cookiesMap[this.cookie];
+  get me(): GameActor | undefined {
+    for (let actorId of Object.keys(this.game.actorsMap)) {
+      let actor = this.game.actorsMap[actorId];
+      if (actor.cookie === this.cookie) {
+        return actor;
+      }
+    }
   }
 
   get isGameMaster(): boolean {
-    return this.me.actorId === this.game.gameMasterPlayerId;
+    return this.me!.actorId === this.game.gameMasterPlayerId;
   }
 
   get gameMasterStatement(): string {
@@ -180,7 +185,7 @@ export default class GameView extends Vue {
 
   getGame(httpMethod: string, url: string, body: any | undefined) {
     console.log(
-      `${LOGGING_CLASS_NAME} - [${httpMethod}] url=${url}, cookie=${this.cookie}, body=${body}`
+      `${LOGGING_CLASS_NAME} - [${httpMethod}] url=${url}, cookie=${this.cookie}, body=${JSON.stringify(body)}`
     );
 
     this.loading = true;

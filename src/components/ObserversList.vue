@@ -9,7 +9,7 @@
           <i class="fa fa-user"></i>
         </md-icon>
         <span class="md-list-item-text">You are currently an observer</span>
-        <md-button @click="joinGame" class="md-icon-button md-list-action">
+        <md-button @click="showDisplayNamePrompt = true" class="md-icon-button md-list-action">
           <md-tooltip md-direction="top">Join Game</md-tooltip>
           <md-icon class="md-primary">
             <i class="fa fa-plus-circle"></i>
@@ -26,12 +26,21 @@
         <span class="md-list-item-text">There are {{others.length}} other observers of this game</span>
       </md-list-item>
     </md-list>
+
+    <md-dialog-prompt
+      @md-confirm="confirmJoinGame"
+      @md-cancel="cancelJoinGame"
+      :md-active.sync="showDisplayNamePrompt"
+      v-model="displayNameInput"
+      md-title="What is your name?"
+      md-input-placeholder="Type your name..."
+    />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Prop } from "vue-property-decorator";
-import { Game, GameActor } from "../model/game.model";
+import { Game, GameActor } from "@/model/game.model";
 import { VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
 
 @Component({
@@ -42,6 +51,9 @@ export default class ObserversList extends Vue {
 
   @Prop() actors!: GameActor[];
   @Prop() cookie!: string;
+
+  showDisplayNamePrompt: boolean = false;
+  displayNameInput: string = '';
 
   get amInList(): boolean {
     return !!this.me;
@@ -55,10 +67,19 @@ export default class ObserversList extends Vue {
     return this.actors.filter(a => a.cookie !== this.cookie);
   }
 
-  joinGame(): void {
-    console.log("clicked join game");
-    console.log(this.me!.actorId);
-    this.$emit(VUE_EMITTED_ACTIONS.JOIN_GAME, this.me!.actorId);
+  cancelJoinGame(): void {
+    this.showDisplayNamePrompt = false;
+    this.displayNameInput = '';
+  }
+
+  confirmJoinGame(): void {
+    if (this.displayNameInput){
+      this.$emit(VUE_EMITTED_ACTIONS.JOIN_GAME, this.me!.actorId, this.displayNameInput);
+      this.showDisplayNamePrompt = false;
+    } else {
+      this.showDisplayNamePrompt = true;
+    }
+    this.displayNameInput = '';
   }
 }
 </script>
