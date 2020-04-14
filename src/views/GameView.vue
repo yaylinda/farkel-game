@@ -28,24 +28,20 @@
 
         <div class="md-layout md-gutter">
           <ObserversList
-            class="md-layout-item" 
+            class="md-layout-item"
             @joinGame="joinGame"
-            :actors="observers" 
+            :actors="observers"
             :cookie="cookie"
           />
 
-          <PlayersList 
-            class="md-layout-item" 
+          <PlayersList
+            class="md-layout-item"
             @readyToStart="readyToStart"
-            :actors="players" 
+            :actors="players"
             :cookie="cookie"
           />
 
-          <ActionsList 
-            class="md-layout-item" 
-            :actions="actions" 
-            :cookie="cookie"
-          />
+          <ActionsList class="md-layout-item" :actions="actions" :cookie="cookie" />
         </div>
 
         <ActionsBar />
@@ -56,13 +52,19 @@
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import { FARKLE_GAME_COOKIE, WAITING_GAME_PHASE, VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
+import {
+  FARKLE_GAME_COOKIE,
+  WAITING_GAME_PHASE,
+  GAME_ACTIONS,
+  HTTP_METHODS
+} from "@/utilities/Constants";
 import { v4 as uuidv4 } from "uuid";
 import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
 import ActionsList from "@/components/ActionsList.vue";
 import ObserversList from "@/components/ObserversList.vue";
 import PlayersList from "@/components/PlayersList.vue";
 import ActionsBar from "@/components/ActionsBar.vue";
+import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
 
 const HOST: string = "http://localhost:8080/farkel-backend";
 const LOGGING_CLASS_NAME: string = "[GAME]";
@@ -71,7 +73,7 @@ const LOGGING_CLASS_NAME: string = "[GAME]";
   components: {
     ActionsList,
     ObserversList,
-    PlayersList, 
+    PlayersList,
     ActionsBar
   }
 })
@@ -79,7 +81,8 @@ export default class GameView extends Vue {
   WAITING_PHASE_CONST: string = WAITING_GAME_PHASE;
 
   game: Game = new Game();
-  cookie: string = '';
+  cookie: string = "";
+  headers: any = {};
   loading: boolean = true;
 
   get observers(): GameActor[] {
@@ -99,8 +102,8 @@ export default class GameView extends Vue {
   }
 
   get actions(): GameActionLogEntry[] {
-     const actions: GameActionLogEntry[] = [];
-     return this.game.actionLogs;
+    const actions: GameActionLogEntry[] = [];
+    return this.game.actionLogs;
   }
 
   get me(): GameActor {
@@ -113,80 +116,108 @@ export default class GameView extends Vue {
 
   get gameMasterStatement(): string {
     if (this.isGameMaster) {
-      return 'You are the GameMaster';
+      return "You are the GameMaster";
     }
 
     const gameMaster = this.game.actorsMap[this.game.gameMasterPlayerId];
-    const gameMasterDisplayName = gameMaster.displayName ? gameMaster.displayName : '???';
+    const gameMasterDisplayName = gameMaster.displayName
+      ? gameMaster.displayName
+      : "???";
 
     return `Your GameMaster is ${gameMasterDisplayName}`;
   }
 
   mounted() {
     console.log(`${LOGGING_CLASS_NAME} - mounted`);
-
-    this.cookie = this._getOrSetCookie();
-
-    this._getGameByGameIdAndCookieValue();
+    this.initializeCookieAndHeaders();
+    this.getGame(HTTP_METHODS.GET, `${HOST}/games/${this.$route.params.gameId}`, null);
   }
 
-  joinGame(actorId: string) {
-    console.log(`${LOGGING_CLASS_NAME} - joinGame handler, actorId: ${actorId}`);
+  initializeCookieAndHeaders() {
+    this.cookie = this.$cookies.get(FARKLE_GAME_COOKIE);
+    console.log(
+        `${LOGGING_CLASS_NAME} - mounted - using existing cookie ${this.cookie}`
+      );
 
+    if (!this.cookie) {
+      this.cookie = uuidv4();
+      console.log(
+        `${LOGGING_CLASS_NAME} - mounted - new cookie generated as ${this.cookie}`
+      );
+      this.$cookies.set(FARKLE_GAME_COOKIE, this.cookie);
+    }
+
+    this.headers = {
+      [FARKLE_GAME_COOKIE]: this.cookie
+    }
+  }
+
+  joinGame(actorId: string, displayName: string) {
+    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${actorId}`;
+
+    const body = {
+      actorId: actorId,
+      gameAction: GAME_ACTIONS.JOIN_AS_PLAYER,
+      metadata: {
+        displayName: displayName
+      }
+    };
+
+    this.getGame(HTTP_METHODS.PUT, url, body);
   }
 
   readyToStart(actorId: string) {
-    console.log(`${LOGGING_CLASS_NAME} - readyToStart handler, actorId: ${actorId}`);
+    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${actorId}`;
+
+    const body = {
+      actorId: actorId,
+      gameAction: GAME_ACTIONS.READY_TO_PLAY,
+      metadata: { }
+    };
+
+    this.getGame(HTTP_METHODS.PUT, url, body);
   }
 
-  _getOrSetCookie(): string {
-    let cookie = this.$cookies.get(FARKLE_GAME_COOKIE);
-    console.log(`${LOGGING_CLASS_NAME} - mounted - using existing ${cookie}`);
-
-    if (!cookie) {
-      cookie = uuidv4();
-      console.log(
-        `${LOGGING_CLASS_NAME} - mounted - new cookie generated as ${cookie}`
-      );
-      this.$cookies.set(FARKLE_GAME_COOKIE, cookie);
-    }
-
-    return cookie;
-  }
-
-  _getGameByGameIdAndCookieValue(): void {
-    const url = `${HOST}/games/${this.$route.params.gameId}`;
-
+  getGame(httpMethod: string, url: string, body: any | undefined) {
     console.log(
-      `${LOGGING_CLASS_NAME} - getGameByGameIdAndCookieValue - calling url=${url}, with cookie=${this.cookie}`
+      `${LOGGING_CLASS_NAME} - [${httpMethod}] url=${url}, cookie=${this.cookie}, body=${body}`
     );
 
-    this.$http
-      .get(url, {
-        headers: {
-          [FARKLE_GAME_COOKIE]: this.cookie
+    this.loading = true;
+
+    let protocol: PromiseLike<HttpResponse> | null = null;
+
+    if (httpMethod === HTTP_METHODS.GET) {
+      protocol = this.$http.get(url, { headers: this.headers });
+    } else if (httpMethod === HTTP_METHODS.PUT) {
+      protocol = this.$http.put(url, body, { headers: this.headers });
+    }
+
+    if (!protocol) {
+      console.error("Unknown or unimplemented http method: " + httpMethod);
+      this.loading = false;
+    }
+
+    (protocol!).then(
+      result => {
+        if (result.ok && result.data) {
+          console.log(
+            `${LOGGING_CLASS_NAME} - getGame - SUCCESS`
+          );
+          this.game = result.data;
+        } else {
+          console.log(
+            `${LOGGING_CLASS_NAME} - getGame - ERROR`
+          );
+          throw new Error(JSON.stringify(result));
         }
-      })
-      .then(
-        result => {
-          if (result.ok && result.data) {
-            console.log(
-              `${LOGGING_CLASS_NAME} - getGameByGameIdAndCookieValue - successfully got game state`
-            );
-            this.game = result.data;
-          } else {
-            console.log(
-              `${LOGGING_CLASS_NAME} - getGameByGameIdAndCookieValue - error getting game state`
-            );
-            throw new Error(JSON.stringify(result));
-          }
-          this.loading = false;
-        },
-        error => {
-          // TODO - show error in a friendly way to user
-          console.log(error);
-        }
-      );
+        this.loading = false;
+      },
+      error => {
+        // TODO - show error in a friendly way to user
+        console.log(error);
+      }
+    );
   }
 }
 </script>
