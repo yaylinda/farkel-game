@@ -38,7 +38,7 @@
 <script lang="ts">
 import { Component, Vue, Prop } from "vue-property-decorator";
 import { Game, GameActor } from "@/model/game.model";
-import { VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
+import { GAME_ACTIONS } from "@/utilities/Constants";
 
 @Component({
   components: {}
@@ -68,7 +68,7 @@ export default class PlayersList extends Vue {
   readyToPlay(): void {
     console.log('clicked readyToPlay');
     console.log(this.me!.actorId);
-    this.$emit(VUE_EMITTED_ACTIONS.READY_TO_START, this.me!.actorId);
+    this.$emit('doGameAction', GAME_ACTIONS.READY_TO_PLAY, {});
   }
 }
 </script>

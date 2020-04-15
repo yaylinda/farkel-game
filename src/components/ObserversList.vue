@@ -41,7 +41,7 @@
 <script lang="ts">
 import { Component, Vue, Prop } from "vue-property-decorator";
 import { Game, GameActor } from "@/model/game.model";
-import { VUE_EMITTED_ACTIONS } from "@/utilities/Constants";
+import { GAME_ACTIONS } from "@/utilities/Constants";
 
 @Component({
   components: {}
@@ -74,7 +74,7 @@ export default class ObserversList extends Vue {
 
   confirmJoinGame(): void {
     if (this.displayNameInput){
-      this.$emit(VUE_EMITTED_ACTIONS.JOIN_GAME, this.me!.actorId, this.displayNameInput);
+      this.$emit('doGameAction', GAME_ACTIONS.JOIN_AS_PLAYER, { displayName: this.displayNameInput });
       this.showDisplayNamePrompt = false;
     } else {
       this.showDisplayNamePrompt = true;

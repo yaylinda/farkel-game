@@ -30,6 +30,8 @@ export class GameConfiguration {
     numDice!: number ;
     diceMaxValue!: number ;
     diceMinValue!: number ;
+    minNumPlayers!: number;
+    maxNumPlayers!: number;
 }
 
 export class DiceManager {

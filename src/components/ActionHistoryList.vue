@@ -1,9 +1,9 @@
 <template>
-  <div class="actions-list-component">
+  <div class="action-history-list-component">
     <md-list>
       <md-subheader>Game Actions History</md-subheader>
       <md-list-item v-for="(a, i) in actions" :key="(a , i)">
-          <span class="md-list-item-text">{{a.action}}</span>
+          <span class="md-list-item-text">{{a.action}} ({{a.actorDisplayName}})</span>
       </md-list-item>
     </md-list>
 
@@ -17,7 +17,7 @@ import { Game, GameActionLogEntry } from "@/model/game.model";
 @Component({
   components: {}
 })
-export default class ActionsList extends Vue {
+export default class ActionHistoryList extends Vue {
   LOGGING_CLASS_NAME: string = "[ActionsList]";
 
   @Prop() actions!: GameActionLogEntry[];

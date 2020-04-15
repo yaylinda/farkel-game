@@ -29,22 +29,32 @@
         <div class="md-layout md-gutter">
           <ObserversList
             class="md-layout-item"
-            @joinGame="joinGame"
+            @doGameAction="doGameAction"
             :actors="observers"
             :cookie="cookie"
           />
 
           <PlayersList
             class="md-layout-item"
-            @readyToStart="readyToStart"
+            @doGameAction="doGameAction"
             :actors="players"
             :cookie="cookie"
           />
 
-          <ActionsList class="md-layout-item" :actions="actions" :cookie="cookie" />
+          <ActionHistoryList 
+            class="md-layout-item" 
+            :actions="actions" 
+            :cookie="cookie"
+          />
         </div>
 
-        <ActionsBar />
+        <ActionsBar 
+          :game="game" 
+          :cookie="cookie" 
+          :isGameMaster="isGameMaster"
+          :isMyTurn="isMyTurn"
+          @doGameAction="doGameAction"
+        />
       </div>
     </div>
   </div>
@@ -54,13 +64,12 @@
 import { Component, Vue } from "vue-property-decorator";
 import {
   FARKLE_GAME_COOKIE,
-  WAITING_GAME_PHASE,
   GAME_ACTIONS,
   HTTP_METHODS
 } from "@/utilities/Constants";
 import { v4 as uuidv4 } from "uuid";
 import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
-import ActionsList from "@/components/ActionsList.vue";
+import ActionHistoryList from "@/components/ActionHistoryList.vue";
 import ObserversList from "@/components/ObserversList.vue";
 import PlayersList from "@/components/PlayersList.vue";
 import ActionsBar from "@/components/ActionsBar.vue";
@@ -71,15 +80,13 @@ const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
   components: {
-    ActionsList,
+    ActionHistoryList,
     ObserversList,
     PlayersList,
     ActionsBar
   }
 })
 export default class GameView extends Vue {
-  WAITING_PHASE_CONST: string = WAITING_GAME_PHASE;
-
   game: Game = new Game();
   cookie: string = "";
   headers: any = {};
@@ -132,6 +139,10 @@ export default class GameView extends Vue {
     return `Your GameMaster is ${gameMasterDisplayName}`;
   }
 
+  get isMyTurn(): boolean {
+    return this.me!.actorId === this.game.currentTurnPlayerId;
+  }
+
   mounted() {
     console.log(`${LOGGING_CLASS_NAME} - mounted`);
     this.initializeCookieAndHeaders();
@@ -157,27 +168,14 @@ export default class GameView extends Vue {
     }
   }
 
-  joinGame(actorId: string, displayName: string) {
-    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${actorId}`;
+  doGameAction(gameAction: string, metadata: any) {
+    console.log(`${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(metadata)}`)
+    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${this.me!.actorId}`;
 
     const body = {
-      actorId: actorId,
-      gameAction: GAME_ACTIONS.JOIN_AS_PLAYER,
-      metadata: {
-        displayName: displayName
-      }
-    };
-
-    this.getGame(HTTP_METHODS.PUT, url, body);
-  }
-
-  readyToStart(actorId: string) {
-    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${actorId}`;
-
-    const body = {
-      actorId: actorId,
-      gameAction: GAME_ACTIONS.READY_TO_PLAY,
-      metadata: { }
+      actorId: this.me!.actorId,
+      gameAction: gameAction,
+      metadata: metadata
     };
 
     this.getGame(HTTP_METHODS.PUT, url, body);
