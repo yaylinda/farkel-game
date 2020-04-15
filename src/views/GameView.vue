@@ -1,12 +1,8 @@
 <template>
   <div class="game-view">
-    <div class="game-header-section">
-      <md-toolbar>
-        <h3 class="md-title">Farkel Game</h3>
-      </md-toolbar>
-    </div>
+    <GoToGame v-if="!$route.params.gameId" />
 
-    <div class="game-content-section">
+    <div v-else class="game-content-section">
       <div v-if="loading" class="game-loading-spinner">
         <md-progress-spinner :md-diameter="100" :md-stroke="10" md-mode="indeterminate" />
       </div>
@@ -26,35 +22,34 @@
           </md-card-header>
         </md-card>
 
-        <div class="md-layout md-gutter">
-          <ObserversList
-            class="md-layout-item"
-            @doGameAction="doGameAction"
-            :actors="observers"
-            :cookie="cookie"
-          />
+        <!-- Board Layout of the WAITING state -->
 
-          <PlayersList
-            class="md-layout-item"
-            @doGameAction="doGameAction"
-            :actors="players"
-            :cookie="cookie"
-          />
-
-          <ActionHistoryList 
-            class="md-layout-item" 
-            :actions="actions" 
-            :cookie="cookie"
+        <div v-if="game.gamePhase === 'WAITING'">
+          <PlayersList @doGameAction="doGameAction" :actors="players" :cookie="cookie" />
+          <div v-if="isGameMaster">
+            <md-tooltip
+              v-if="!isStartGameEnabled"
+            >Need at least {{game.gameConfiguration.minNumPlayers}} Players to be ready</md-tooltip>
+            <md-button
+              :disabled="!isStartGameEnabled"
+              @click="showConfirmStartGameDialog = true"
+              class="md-raised md-primary"
+            >Start Game</md-button>
+          </div>
+          <md-dialog-confirm
+            :md-active.sync="showConfirmStartGameDialog"
+            md-title="Confirm Start Game"
+            md-content="This will start the Farkel Game with all the Ready Players"
+            @md-confirm="doGameAction('START_GAME', null)"
           />
         </div>
 
-        <ActionsBar 
-          :game="game" 
-          :cookie="cookie" 
-          :isGameMaster="isGameMaster"
-          :isMyTurn="isMyTurn"
-          @doGameAction="doGameAction"
-        />
+        <div v-else-if="game.gamePhase === 'PLAYING'">
+          <InGamePlayersList :game="game" :me="me" />
+        </div>
+
+        <!-- Board UI Layout for COMPLETED state -->
+        <div v-else-if="game.gamePhase === 'COMPLETED'"></div>
       </div>
     </div>
   </div>
@@ -70,9 +65,10 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
 import ActionHistoryList from "@/components/ActionHistoryList.vue";
-import ObserversList from "@/components/ObserversList.vue";
+import InGamePlayersList from "@/components/InGamePlayersList.vue";
 import PlayersList from "@/components/PlayersList.vue";
 import ActionsBar from "@/components/ActionsBar.vue";
+import GoToGame from "@/components/GoToGame.vue";
 import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
 
 const HOST: string = "http://localhost:8080/farkel-backend";
@@ -80,8 +76,9 @@ const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
   components: {
+    GoToGame,
     ActionHistoryList,
-    ObserversList,
+    InGamePlayersList,
     PlayersList,
     ActionsBar
   }
@@ -91,6 +88,10 @@ export default class GameView extends Vue {
   cookie: string = "";
   headers: any = {};
   loading: boolean = true;
+
+  showConfirmStartGameDialog: boolean = false;
+
+  // COMPUTED GETTERS
 
   get observers(): GameActor[] {
     const observers: GameActor[] = [];
@@ -131,6 +132,10 @@ export default class GameView extends Vue {
       return "You are the GameMaster";
     }
 
+    if (!this.game.gameMasterPlayerId) {
+      return "Your GameMaster is ???";
+    }
+
     const gameMaster = this.game.actorsMap[this.game.gameMasterPlayerId];
     const gameMasterDisplayName = gameMaster.displayName
       ? gameMaster.displayName
@@ -143,17 +148,57 @@ export default class GameView extends Vue {
     return this.me!.actorId === this.game.currentTurnPlayerId;
   }
 
+  get isStartGameEnabled(): boolean {
+    let numReady = 0;
+    for (let playerId of this.game.playersRoster) {
+      let player = this.game.actorsMap[playerId];
+      if (player.playerReady) {
+        numReady += 1;
+      }
+    }
+    return numReady >= this.game.gameConfiguration.minNumPlayers;
+  }
+
+  // VUE COMPONENT LIFECYCLE METHODS
+
   mounted() {
     console.log(`${LOGGING_CLASS_NAME} - mounted`);
     this.initializeCookieAndHeaders();
-    this.getGame(HTTP_METHODS.GET, `${HOST}/games/${this.$route.params.gameId}`, null);
+    this.getGame(
+      HTTP_METHODS.GET,
+      `${HOST}/games/${this.$route.params.gameId}`,
+      null
+    );
   }
+
+  // ACTION HANDLERS
+
+  doGameAction(gameAction: string, metadata: any) {
+    console.log(
+      `${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(
+        metadata
+      )}`
+    );
+    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${
+      this.me!.actorId
+    }`;
+
+    const body = {
+      actorId: this.me!.actorId,
+      gameAction: gameAction,
+      metadata: metadata
+    };
+
+    this.getGame(HTTP_METHODS.PUT, url, body);
+  }
+
+  // HELPER METHODS
 
   initializeCookieAndHeaders() {
     this.cookie = this.$cookies.get(FARKLE_GAME_COOKIE);
     console.log(
-        `${LOGGING_CLASS_NAME} - mounted - using existing cookie ${this.cookie}`
-      );
+      `${LOGGING_CLASS_NAME} - mounted - using existing cookie ${this.cookie}`
+    );
 
     if (!this.cookie) {
       this.cookie = uuidv4();
@@ -165,25 +210,14 @@ export default class GameView extends Vue {
 
     this.headers = {
       [FARKLE_GAME_COOKIE]: this.cookie
-    }
-  }
-
-  doGameAction(gameAction: string, metadata: any) {
-    console.log(`${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(metadata)}`)
-    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${this.me!.actorId}`;
-
-    const body = {
-      actorId: this.me!.actorId,
-      gameAction: gameAction,
-      metadata: metadata
     };
-
-    this.getGame(HTTP_METHODS.PUT, url, body);
   }
 
   getGame(httpMethod: string, url: string, body: any | undefined) {
     console.log(
-      `${LOGGING_CLASS_NAME} - [${httpMethod}] url=${url}, cookie=${this.cookie}, body=${JSON.stringify(body)}`
+      `${LOGGING_CLASS_NAME} - [${httpMethod}] url=${url}, cookie=${
+        this.cookie
+      }, body=${JSON.stringify(body)}`
     );
 
     this.loading = true;
@@ -201,17 +235,13 @@ export default class GameView extends Vue {
       this.loading = false;
     }
 
-    (protocol!).then(
+    protocol!.then(
       result => {
         if (result.ok && result.data) {
-          console.log(
-            `${LOGGING_CLASS_NAME} - getGame - SUCCESS`
-          );
+          console.log(`${LOGGING_CLASS_NAME} - getGame - SUCCESS`);
           this.game = result.data;
         } else {
-          console.log(
-            `${LOGGING_CLASS_NAME} - getGame - ERROR`
-          );
+          console.log(`${LOGGING_CLASS_NAME} - getGame - ERROR`);
           throw new Error(JSON.stringify(result));
         }
         this.loading = false;
@@ -228,5 +258,9 @@ export default class GameView extends Vue {
 <style lang="scss" scoped>
 .game-content-section {
   padding: 1rem;
+}
+
+.submit {
+  color: #4caf50;
 }
 </style>

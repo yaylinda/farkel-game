@@ -12,6 +12,11 @@ const routes: Array<RouteConfig> = [
     component: Home
   },
   {
+    path: '/games/',
+    name: 'Home',
+    component: Home
+  },
+  {
     path: '/games/:gameId',
     name: 'Games',
     component: GameView

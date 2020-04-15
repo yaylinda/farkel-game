@@ -1,13 +1,7 @@
 <template>
-  <div class="home-header-section">
-    <md-toolbar>
-      <h3 class="md-title">Farkel Game</h3>
-    </md-toolbar>
-
-    <div class="home-content-section">
-      <GoToGame></GoToGame>
+    <div class="home-view">
+      <GoToGame />
     </div>
-  </div>
 </template>
 
 <script lang="ts">
@@ -30,7 +24,7 @@ export default class Home extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.home-content-section {
+.home-view {
   padding: 1rem;
 }
 </style>

@@ -15,9 +15,9 @@
             <i class="fa fa-plus-circle"></i>
           </md-icon>
         </md-button>
-      </md-list-item>
 
-      <md-divider class="md-inset"></md-divider>
+        <md-divider class="md-inset"></md-divider>
+      </md-list-item>
 
       <md-list-item>
         <md-icon>

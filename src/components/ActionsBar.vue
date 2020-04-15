@@ -6,7 +6,7 @@
     </div>
 
     <div v-else-if="game.gamePhase === 'PLAYING'">
-
+      <md-button @click="clickStartGame" class="md-raised md-primary">Start Game</md-button>
     </div>
 
     <div v-else-if="game.gamePhase === 'COMPLETED'">
