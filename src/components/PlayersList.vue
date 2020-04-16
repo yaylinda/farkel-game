@@ -1,11 +1,11 @@
 <template>
   <div class="players-list-component">
     <md-list class="md-double-line">
-      <md-subheader>Game Lobby ( {{numReady}} / {{actors.length}} ready )</md-subheader>
+      <md-subheader>Game Lobby ( {{numReady}} / {{actors.length}} ready ) (<i class="fa fa-eye" />{{numObservers}} )</md-subheader>
       
       <!-- List Row for Current User (YOU) -->
       <md-list-item v-if="amInList">
-        <md-icon>
+        <md-icon :style="{ color: me.color }">
           <i v-if="me.playerReady" class="fa fa-child" />
           <i v-else class="fa fa-user" />
         </md-icon>
@@ -16,7 +16,7 @@
         </div>
 
         <md-button v-if="!me.playerReady" @click="readyToPlay" class="md-icon-button md-list-action">
-          <md-tooltip md-direction="top">I'm ready to play!</md-tooltip>
+          <md-tooltip md-direction="top">Press to let others know you're ready to start the game</md-tooltip>
           <md-icon class="md-primary">
             <i class="fa fa-play"/>
           </md-icon>
@@ -25,7 +25,7 @@
 
       <!-- List Row for each Player -->
       <md-list-item v-for="(p, i) in others" :key="(p, i)">
-        <md-icon>
+        <md-icon :style="{ color: p.color }">
           <i v-if="p.playerReady" class="fa fa-child" />
           <i v-else class="fa fa-user" />
         </md-icon>
@@ -68,8 +68,9 @@ import { GAME_ACTIONS } from "@/utilities/Constants";
 export default class PlayersList extends Vue {
   LOGGING_CLASS_NAME: string = "[PlayersList]";
 
-  @Prop() actors!: GameActor[];
+  @Prop() actors!: GameActor[]; // These are the "players"
   @Prop() cookie!: string;
+  @Prop() numObservers!: number;
 
   showDisplayNamePrompt: boolean = false;
   displayNameInput: string = '';
@@ -118,5 +119,9 @@ export default class PlayersList extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.fa-eye {
+  padding-right: 5px;
+  padding-left: 5px;
+}
 
 </style>

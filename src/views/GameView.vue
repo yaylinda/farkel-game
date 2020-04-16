@@ -22,10 +22,15 @@
           </md-card-header>
         </md-card>
 
-        <!-- Board Layout of the WAITING state -->
+        <!-- Board Layout of the WAITING phase -->
 
         <div v-if="game.gamePhase === 'WAITING'">
-          <PlayersList @doGameAction="doGameAction" :actors="players" :cookie="cookie" />
+          <PlayersList 
+            @doGameAction="doGameAction" 
+            :actors="players" 
+            :cookie="cookie" 
+            :numObservers="observers.length"
+          />
           <div v-if="isGameMaster">
             <md-tooltip
               v-if="!isStartGameEnabled"
@@ -40,16 +45,21 @@
             :md-active.sync="showConfirmStartGameDialog"
             md-title="Confirm Start Game"
             md-content="This will start the Farkel Game with all the Ready Players"
-            @md-confirm="doGameAction('START_GAME', null)"
+            @md-confirm="doGameAction('START_GAME', null, false)"
           />
         </div>
 
+        <!-- Board Layout of the PLAYING phase -->
+
         <div v-else-if="game.gamePhase === 'PLAYING'">
           <InGamePlayersList :game="game" :me="me" />
+          <GameState :game="game" :me="me" />
         </div>
 
         <!-- Board UI Layout for COMPLETED state -->
-        <div v-else-if="game.gamePhase === 'COMPLETED'"></div>
+        <div v-else-if="game.gamePhase === 'COMPLETED'">
+
+        </div>
       </div>
     </div>
   </div>
@@ -69,6 +79,7 @@ import InGamePlayersList from "@/components/InGamePlayersList.vue";
 import PlayersList from "@/components/PlayersList.vue";
 import ActionsBar from "@/components/ActionsBar.vue";
 import GoToGame from "@/components/GoToGame.vue";
+import GameState from "@/components/GameState.vue";
 import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
 
 const HOST: string = "http://localhost:8080/farkel-backend";
@@ -80,7 +91,8 @@ const LOGGING_CLASS_NAME: string = "[GAME]";
     ActionHistoryList,
     InGamePlayersList,
     PlayersList,
-    ActionsBar
+    ActionsBar,
+    GameState
   }
 })
 export default class GameView extends Vue {
@@ -173,11 +185,11 @@ export default class GameView extends Vue {
 
   // ACTION HANDLERS
 
-  doGameAction(gameAction: string, metadata: any) {
+  doGameAction(gameAction: string, metadata: any, isPreview: boolean, previousAction: any) {
     console.log(
       `${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(
         metadata
-      )}`
+      )}, isPreview=${isPreview}`
     );
     const url = `${HOST}/games/${this.$route.params.gameId}/actions/${
       this.me!.actorId
@@ -186,7 +198,9 @@ export default class GameView extends Vue {
     const body = {
       actorId: this.me!.actorId,
       gameAction: gameAction,
-      metadata: metadata
+      metadata: metadata,
+      isPreview: isPreview,
+      lastPreviewedActionRequest: this.game.lastPreviewedActionRequest,
     };
 
     this.getGame(HTTP_METHODS.PUT, url, body);

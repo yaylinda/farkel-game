@@ -22,6 +22,7 @@ export class Game {
     aboutToWinPlayerId!: string ;
     winnerPlayerId!: string ;
     comments!: PostGameComment[] ;
+    lastPreviewedActionRequest: any;
 }
 
 export class GameConfiguration {
@@ -40,6 +41,7 @@ export class DiceManager {
 }
 
 export class Die {
+    index!: number;
     min!: number;
     max!: number;
     value!: number;
@@ -53,6 +55,7 @@ export class GameActor {
     cookie!: string ; 
     displayName!: string ;
     score!: number ;
+    color!: string;
 }
 
 export class GameActionLogEntry {
