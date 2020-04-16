@@ -25,10 +25,10 @@
         <!-- Board Layout of the WAITING phase -->
 
         <div v-if="game.gamePhase === 'WAITING'">
-          <PlayersList 
-            @doGameAction="doGameAction" 
-            :actors="players" 
-            :cookie="cookie" 
+          <PlayersList
+            @doGameAction="doGameAction"
+            :actors="players"
+            :cookie="cookie"
             :numObservers="observers.length"
           />
           <div v-if="isGameMaster">
@@ -57,9 +57,7 @@
         </div>
 
         <!-- Board UI Layout for COMPLETED state -->
-        <div v-else-if="game.gamePhase === 'COMPLETED'">
-
-        </div>
+        <div v-else-if="game.gamePhase === 'COMPLETED'"></div>
       </div>
     </div>
   </div>
@@ -81,6 +79,8 @@ import ActionsBar from "@/components/ActionsBar.vue";
 import GoToGame from "@/components/GoToGame.vue";
 import GameState from "@/components/GameState.vue";
 import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
+import * as Stomp from "stompjs";
+import SockJS from "sockjs-client";
 
 const HOST: string = "http://localhost:8080/farkel-backend";
 const LOGGING_CLASS_NAME: string = "[GAME]";
@@ -102,6 +102,9 @@ export default class GameView extends Vue {
   loading: boolean = true;
 
   showConfirmStartGameDialog: boolean = false;
+
+  private stompClient!: Stomp.Client;
+  private gameUpdatedSubscription!: Stomp.Subscription;
 
   // COMPUTED GETTERS
 
@@ -181,11 +184,17 @@ export default class GameView extends Vue {
       `${HOST}/games/${this.$route.params.gameId}`,
       null
     );
+    this.initializeWebSocketConnection();
   }
 
   // ACTION HANDLERS
 
-  doGameAction(gameAction: string, metadata: any, isPreview: boolean, previousAction: any) {
+  doGameAction(
+    gameAction: string,
+    metadata: any,
+    isPreview: boolean,
+    previousAction: any
+  ) {
     console.log(
       `${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(
         metadata
@@ -200,10 +209,35 @@ export default class GameView extends Vue {
       gameAction: gameAction,
       metadata: metadata,
       isPreview: isPreview,
-      lastPreviewedActionRequest: this.game.lastPreviewedActionRequest,
+      lastPreviewedActionRequest: this.game.lastPreviewedActionRequest
     };
 
     this.getGame(HTTP_METHODS.PUT, url, body);
+  }
+
+  // INITIALIZE WEBSOCKET
+
+  initializeWebSocketConnection() {
+    console.log(`${LOGGING_CLASS_NAME} initializeWebSocketConnection`);
+
+    let ws: WebSocket = new SockJS(`${HOST}/socket/`);
+    this.stompClient = Stomp.over(ws);
+
+    this.stompClient.connect({}, () => {
+      this.gameUpdatedSubscription = this.stompClient.subscribe(
+        `/topic/games/${this.$route.params.gameId}`,
+        (message: Stomp.Message) => {
+          if (message.body) {
+            console.log(`${LOGGING_CLASS_NAME} got message from websocket`);
+            const body = JSON.parse(message.body);
+            if (body.cookie !== this.cookie) {
+              this.game = body.game;
+              this.$toast.info(body.message);
+            }
+          }
+        }
+      );
+    });
   }
 
   // HELPER METHODS
@@ -265,6 +299,16 @@ export default class GameView extends Vue {
         console.log(error);
       }
     );
+  }
+
+  destroyed() {
+    if (this.stompClient) {
+      this.stompClient.disconnect(() => {
+        if (this.gameUpdatedSubscription) {
+          this.gameUpdatedSubscription.unsubscribe();
+        }
+      });
+    }
   }
 }
 </script>
