@@ -45,7 +45,7 @@
             :md-active.sync="showConfirmStartGameDialog"
             md-title="Confirm Start Game"
             md-content="This will start the Farkel Game with all the Ready Players"
-            @md-confirm="doGameAction('START_GAME', null, false)"
+            @md-confirm="doGameAction('START_GAME', null)"
           />
         </div>
 
@@ -72,10 +72,8 @@ import {
 } from "@/utilities/Constants";
 import { v4 as uuidv4 } from "uuid";
 import { Game, GameActor, GameActionLogEntry } from "@/model/game.model";
-import ActionHistoryList from "@/components/ActionHistoryList.vue";
 import InGamePlayersList from "@/components/InGamePlayersList.vue";
 import PlayersList from "@/components/PlayersList.vue";
-import ActionsBar from "@/components/ActionsBar.vue";
 import GoToGame from "@/components/GoToGame.vue";
 import GameState from "@/components/GameState.vue";
 import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
@@ -89,10 +87,8 @@ const LOGGING_CLASS_NAME: string = "[GAME]";
 @Component({
   components: {
     GoToGame,
-    ActionHistoryList,
     InGamePlayersList,
     PlayersList,
-    ActionsBar,
     GameState
   }
 })
@@ -235,11 +231,6 @@ export default class GameView extends Vue {
             });
 
             this.doToast(body.from);
-
-            // if (body.cookie !== this.cookie) {
-            //   this.game = body.game;
-            //   this.$toast.info(body.message);
-            // }
           }
         }
       );
@@ -256,10 +247,6 @@ export default class GameView extends Vue {
     } else if (this.game.lastPerformedAction === 'JOIN_AS_PLAYER' && from !== this.cookie) {
       this.$toast.info(`${this.game.lastActor} has joined the game!`);
     }
-    // if (this.game.newTurn) {
-    //   const name: string = this.game.actorsMap[this.game.currentTurnPlayerId].displayName;
-    //   this.$toast.info(`It is ${name}'s turn`);
-    // }
   }
 
   initializeCookieAndHeaders() {
