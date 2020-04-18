@@ -83,7 +83,7 @@ import * as Stomp from "stompjs";
 import SockJS from "sockjs-client";
 import { ToastOptions } from 'vue-toastification/dist/types/src/types';
 
-const HOST: string = "http://localhost:8080/farkel-backend";
+const HOST: string = process.env.VUE_APP_FARKEL_BACKEND_HOST!;
 const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
@@ -235,7 +235,7 @@ export default class GameView extends Vue {
             });
 
             this.doToast(body.from);
-            
+
             // if (body.cookie !== this.cookie) {
             //   this.game = body.game;
             //   this.$toast.info(body.message);
