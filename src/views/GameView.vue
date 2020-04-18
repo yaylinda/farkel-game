@@ -53,7 +53,7 @@
 
         <div v-else-if="game.gamePhase === 'PLAYING'">
           <InGamePlayersList :game="game" :me="me" />
-          <GameState :game="game" :me="me" />
+          <GameState @doGameAction="doGameAction" :game="game" :me="me" />
         </div>
 
         <!-- Board UI Layout for COMPLETED state -->
@@ -81,6 +81,7 @@ import GameState from "@/components/GameState.vue";
 import { HttpOptions, HttpResponse } from "vue-resource/types/vue_resource";
 import * as Stomp from "stompjs";
 import SockJS from "sockjs-client";
+import { ToastOptions } from 'vue-toastification/dist/types/src/types';
 
 const HOST: string = "http://localhost:8080/farkel-backend";
 const LOGGING_CLASS_NAME: string = "[GAME]";
@@ -192,15 +193,13 @@ export default class GameView extends Vue {
   doGameAction(
     gameAction: string,
     metadata: any,
-    isPreview: boolean,
-    previousAction: any
   ) {
     console.log(
       `${LOGGING_CLASS_NAME} doGameAction: gameAction=${gameAction}, metadata=${JSON.stringify(
         metadata
-      )}, isPreview=${isPreview}`
+      )}`
     );
-    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${
+    const url = `${HOST}/games/${this.$route.params.gameId}/actions/${ 
       this.me!.actorId
     }`;
 
@@ -208,8 +207,6 @@ export default class GameView extends Vue {
       actorId: this.me!.actorId,
       gameAction: gameAction,
       metadata: metadata,
-      isPreview: isPreview,
-      lastPreviewedActionRequest: this.game.lastPreviewedActionRequest
     };
 
     this.getGame(HTTP_METHODS.PUT, url, body);
@@ -230,10 +227,19 @@ export default class GameView extends Vue {
           if (message.body) {
             console.log(`${LOGGING_CLASS_NAME} got message from websocket`);
             const body = JSON.parse(message.body);
-            if (body.cookie !== this.cookie) {
-              this.game = body.game;
-              this.$toast.info(body.message);
-            }
+            this.game = body.game;
+
+            this.game.diceManager.dice.forEach((d) => {
+              d.keep = !d.keep;
+              d.keep = !d.keep;
+            });
+
+            this.doToast(body.from);
+            
+            // if (body.cookie !== this.cookie) {
+            //   this.game = body.game;
+            //   this.$toast.info(body.message);
+            // }
           }
         }
       );
@@ -241,6 +247,20 @@ export default class GameView extends Vue {
   }
 
   // HELPER METHODS
+
+  doToast(from: string) {
+    if (this.game.lastPerformedAction === 'CREATE') {
+      this.$toast.success('You created a new Farkel Game!');
+    } else if (this.game.lastPerformedAction === 'START_GAME') { 
+      this.$toast.success('The Farkel Game has started!');
+    } else if (this.game.lastPerformedAction === 'JOIN_AS_PLAYER' && from !== this.cookie) {
+      this.$toast.info(`${this.game.lastActor} has joined the game!`);
+    }
+    // if (this.game.newTurn) {
+    //   const name: string = this.game.actorsMap[this.game.currentTurnPlayerId].displayName;
+    //   this.$toast.info(`It is ${name}'s turn`);
+    // }
+  }
 
   initializeCookieAndHeaders() {
     this.cookie = this.$cookies.get(FARKLE_GAME_COOKIE);
@@ -295,7 +315,7 @@ export default class GameView extends Vue {
         this.loading = false;
       },
       error => {
-        // TODO - show error in a friendly way to user
+        this.$toast.error('A server error has occured :( \n\nError message: ' + JSON.stringify(error));
         console.log(error);
       }
     );

@@ -1,13 +1,17 @@
 <template>
   <div class="dice-component">
+
+    <!-- <md-tooltip v-if="!!!enabled">You are not allowed to select dice at the moment</md-tooltip> -->
+
     <div class="dice-face">
       {{ die.value ? die.value : '?' }}
     </div>
     <div class="selection">
-      <md-switch 
+      <md-switch
+        v-if="die.value && enabled"
         @change="$emit('dieToggle')" 
         v-model="die.keep"
-        :disabled="die.value === 0"
+        :disabled="!die.usedForDiceScore"
       ></md-switch>
     </div>
   </div>
@@ -25,7 +29,7 @@ export default class DieComponent extends Vue {
   LOGGING_CLASS_NAME: string = "[Die]";
 
   @Prop() die!: Die;
-  @Prop() initialDisable!: boolean;
+  @Prop() enabled!: boolean;
 
 }
 </script>

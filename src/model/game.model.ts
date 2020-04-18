@@ -7,7 +7,8 @@ export class Game {
     gameMasterPlayerId!: string ;
     gameConfiguration!: GameConfiguration ;
     gamePhase!: string ;
-    currentTurnPlayerId!: string ;
+    currentTurnPlayerId!: string;
+    newTurn!: boolean;
     turnCounter!: number ;
     isEveryoneOnTheBoard!: boolean ;
     diceManager!: DiceManager ;
@@ -22,7 +23,9 @@ export class Game {
     aboutToWinPlayerId!: string ;
     winnerPlayerId!: string ;
     comments!: PostGameComment[] ;
-    lastPreviewedActionRequest: any;
+    lastActor!: string;
+    lastPerformedAction!: string;
+    availableActions!: string[];
 }
 
 export class GameConfiguration {
@@ -46,6 +49,7 @@ export class Die {
     max!: number;
     value!: number;
     keep!: boolean;
+    toggled!: boolean;
 }
 
 export class GameActor {

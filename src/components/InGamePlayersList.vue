@@ -10,11 +10,15 @@
         </md-icon>
 
         <div class="row md-list-item-text">
-          <span class="data-name">{{p.displayName}}</span>
+          <span class="data-name">{{p.displayName}} <span v-if="p.cookie === me.cookie">(You)</span></span>
+
           <span class="data-score">
-            <md-chip class="data-chip">On the board</md-chip> <!-- TODO: use isOnBoard() -->
-            <md-chip class="data-chip">About to Win</md-chip> <!-- TODO: use isAboutToWin() -->
-            <md-chip class="data-chip">Score: {{p.score}}</md-chip>
+            <md-icon class="data-chip" :style="{ color: '#42b983' }" v-if="isTurn(p.actorId)">
+              <i class="fa fa-circle" />
+            </md-icon>
+            <!-- <md-chip class="data-chip">On the board</md-chip>
+            <md-chip class="data-chip">About to Win</md-chip>
+            <md-chip class="data-chip">Score: {{p.score}}</md-chip> -->
           </span>
         </div>
       </md-list-item>
