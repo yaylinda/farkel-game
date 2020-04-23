@@ -5,6 +5,10 @@
       <md-chip>Score: {{game.diceManager.diceScore}}</md-chip>-->
     </div>
 
+    <md-divider></md-divider>
+        <md-subheader>Cumulative Turn Score: {{game.cumulativeTurnScore}}</md-subheader>
+    <md-divider></md-divider>
+    
     <div v-if="availableButton('BROADCAST_CHOOSE_DICE') && (game.lastPerformedAction === 'COMMIT_ROLL_DICE' || game.lastPerformedAction === 'BROADCAST_CHOOSE_DICE')">
         <md-divider></md-divider>
         <md-subheader v-if="isMyTurn">Select which dice to keep and score</md-subheader>

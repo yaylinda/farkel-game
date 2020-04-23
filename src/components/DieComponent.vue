@@ -5,13 +5,15 @@
 
     <div class="dice-face">
       {{ die.value ? die.value : '?' }}
+      <div>{{ die.keep ? 'KEEP' : ''}}</div>
+      <div>{{ die.scoreReason }}</div>
     </div>
     <div class="selection">
       <md-switch
         v-if="die.value && enabled"
         @change="$emit('dieToggle')" 
         v-model="die.keep"
-        :disabled="!die.usedForDiceScore"
+        :disabled="!die.eligible"
       ></md-switch>
     </div>
   </div>

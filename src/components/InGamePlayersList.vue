@@ -13,6 +13,7 @@
           <span class="data-name">{{p.displayName}} <span v-if="p.cookie === me.cookie">(You)</span></span>
 
           <span class="data-score">
+            <md-chip class="data-chip">Score: {{p.score}}</md-chip> 
             <md-icon class="data-chip" :style="{ color: '#42b983' }" v-if="isTurn(p.actorId)">
               <i class="fa fa-circle" />
             </md-icon>

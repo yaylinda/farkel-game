@@ -81,7 +81,8 @@ import * as Stomp from "stompjs";
 import SockJS from "sockjs-client";
 import { ToastOptions } from 'vue-toastification/dist/types/src/types';
 
-const HOST: string = process.env.VUE_APP_FARKEL_BACKEND_HOST!;
+// const HOST: string = process.env.VUE_APP_FARKEL_BACKEND_HOST!;
+let HOST: string = '';
 const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
@@ -102,6 +103,13 @@ export default class GameView extends Vue {
 
   private stompClient!: Stomp.Client;
   private gameUpdatedSubscription!: Stomp.Subscription;
+
+  constructor() {
+    super();
+    // const host: string = window.location.hostname;
+    // console.log('*************************' + host);
+    HOST = `http://${window.location.hostname}:8080/farkel-backend`;
+  }
 
   // COMPUTED GETTERS
 

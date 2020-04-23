@@ -44,12 +44,12 @@ export class DiceManager {
 }
 
 export class Die {
-    index!: number;
     min!: number;
     max!: number;
     value!: number;
     keep!: boolean;
-    toggled!: boolean;
+    eligible!: boolean;
+    scoreReason!: string;
 }
 
 export class GameActor {
