@@ -1,6 +1,6 @@
 <template>
   <div class="in-game-players-list-component">
-    <md-list class="md-double-line">
+    <md-list class="full-height md-double-line">
       <md-subheader>Players</md-subheader>
 
       <!-- List Row for each Player -->
@@ -60,27 +60,7 @@ export default class InGamePlayersList extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.my-turn {
-  color: #42b983;
-}
-.row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-.score {
-  text-align: right;
-}
-.data-name {
-  flex: 0.8;
-}
-.data-score {
-  flex: 0.2;
-  display: flex;
-  flex-direction: row;
-}
-.data-chip {
-  height: 1rem;
-  text-align: center;
+.full-height {
+  height: 100%;
 }
 </style>

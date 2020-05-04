@@ -1,9 +1,7 @@
 <template>
   <div class="dice-component">
-    <div class="dice-face">
-      {{ die.value ? die.value : '?' }}
-      <div>{{ die.keep ? 'KEEP' : ''}}</div>
-      <div>{{ die.scoreReason }}</div>
+    <div :class="`dice-face md-elevation-12 ${die.keep ? 'keep' : 'not-keep'}`">
+      <div class="dice-value">{{ die.value ? die.value : '?' }}</div>
     </div>
     <div class="selection">
       <md-switch
@@ -34,17 +32,31 @@ export default class DieComponent extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.keep {
+  border: 1px green solid;
+}
+.not-keep {
+  border: 1px gray solid;
+}
 .dice-component {
   align-content: center;
 }
 .dice-face {
+  display: flex;
   height: 5rem;
   width: 5rem;
-  border: 3px black solid;
   border-radius: 1rem;
   margin: auto;
-  text-align: center;
-  vertical-align: center;
+  justify-content: center;
+  align-items: center;
 }
-
+.dice-value {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 50%;
+  background-color: lightgray;
+  justify-content: center;
+  align-items: center;
+}
 </style>
