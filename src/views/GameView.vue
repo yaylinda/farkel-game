@@ -51,13 +51,11 @@
 
         <!-- Board Layout of the PLAYING phase -->
 
-        <div v-else-if="game.gamePhase === 'PLAYING'">
-          <InGamePlayersList :game="game" :me="me" />
-          <GameState @doGameAction="doGameAction" :game="game" :me="me" />
+        <div v-else-if="game.gamePhase === 'PLAYING'" class="md-layout md-gutter">
+          <InGamePlayersList :game="game" :me="me" class="md-layout-item md-size-20"/>
+          <GameState @doGameAction="doGameAction" :game="game" :me="me" class="md-layout-item"/>
         </div>
 
-        <!-- Board UI Layout for COMPLETED state -->
-        <div v-else-if="game.gamePhase === 'COMPLETED'"></div>
       </div>
     </div>
   </div>
@@ -81,8 +79,12 @@ import * as Stomp from "stompjs";
 import SockJS from "sockjs-client";
 import { ToastOptions } from 'vue-toastification/dist/types/src/types';
 
-// const HOST: string = process.env.VUE_APP_FARKEL_BACKEND_HOST!;
-let HOST: string = '';
+const ENV: string = process.env.VUE_APP_ENV!;
+
+const HOST: string = ENV === 'local' 
+  ? `http://${window.location.hostname}:8080/farkel-backend` 
+  : process.env.VUE_APP_FARKEL_BACKEND_HOST!;
+
 const LOGGING_CLASS_NAME: string = "[GAME]";
 
 @Component({
@@ -106,9 +108,7 @@ export default class GameView extends Vue {
 
   constructor() {
     super();
-    // const host: string = window.location.hostname;
-    // console.log('*************************' + host);
-    HOST = `http://${window.location.hostname}:8080/farkel-backend`;
+    console.log(`FARKEL_BACKEND_HOST: ${HOST}`);
   }
 
   // COMPUTED GETTERS

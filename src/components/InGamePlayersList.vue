@@ -1,27 +1,23 @@
 <template>
   <div class="in-game-players-list-component">
-    <md-list>
+    <md-list class="md-double-line">
       <md-subheader>Players</md-subheader>
 
       <!-- List Row for each Player -->
       <md-list-item v-for="(p, i) in players" :key="(p, i)">
-        <md-icon :style="{ color: p.color }">
-          <i class="fa fa-child" />
+        <md-icon v-if="isTurn(p.actorId)" :style="{ color: 'green' }">
+          <md-tooltip>It is {{p.displayName}}'s turn</md-tooltip>
+          <i class="fa fa-circle" />
+        </md-icon>
+        <md-icon v-else :style="{ color: 'gray' }">
+          <i class="fa fa-circle" />
         </md-icon>
 
-        <div class="row md-list-item-text">
-          <span class="data-name">{{p.displayName}} <span v-if="p.cookie === me.cookie">(You)</span></span>
-
-          <span class="data-score">
-            <md-chip class="data-chip">Score: {{p.score}}</md-chip> 
-            <md-icon class="data-chip" :style="{ color: '#42b983' }" v-if="isTurn(p.actorId)">
-              <i class="fa fa-circle" />
-            </md-icon>
-            <!-- <md-chip class="data-chip">On the board</md-chip>
-            <md-chip class="data-chip">About to Win</md-chip>
-            <md-chip class="data-chip">Score: {{p.score}}</md-chip> -->
-          </span>
+        <div class="md-list-item-text">
+          <span>{{p.displayName}} <span v-if="p.cookie === me.cookie">(You)</span></span>
+          <span>Score: {{p.score}}</span> 
         </div>
+
       </md-list-item>
     </md-list>
   </div>

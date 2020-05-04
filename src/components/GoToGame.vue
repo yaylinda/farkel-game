@@ -3,7 +3,7 @@
 
     <md-field>
       <label>Farkel Game ID</label>
-      <md-input v-model="gameId"></md-input>
+      <md-input v-model="gameId" v-on:keyup.enter="enterPress"></md-input>
       <span class="md-helper-text">Enter the ID of a Farkel Game to go to. If it doesn't exit, we'll create it!</span>
     </md-field>
 
@@ -31,6 +31,12 @@ export default class GoToGame extends Vue {
 
     navigateToGame() {
         this.$router.push({ path: `/games/${this.gameId}`});
+    }
+
+    enterPress() {
+      if (this.gameId) {
+        this.navigateToGame();
+      }
     }
 }
 </script>

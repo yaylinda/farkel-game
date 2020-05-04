@@ -1,8 +1,5 @@
 <template>
   <div class="dice-component">
-
-    <!-- <md-tooltip v-if="!!!enabled">You are not allowed to select dice at the moment</md-tooltip> -->
-
     <div class="dice-face">
       {{ die.value ? die.value : '?' }}
       <div>{{ die.keep ? 'KEEP' : ''}}</div>

@@ -1,15 +1,17 @@
 <template>
   <div class="game-state-component">
-    <div class="game-stats-section">
-      <!-- <div>It is currently {{currentTurnPlayer.displayName}}'s turn.</div>
-      <md-chip>Score: {{game.diceManager.diceScore}}</md-chip>-->
+
+    <div class="game-message">
+      <md-divider></md-divider>
+      <md-subheader>It is {{currentTurnPlayer.displayName}}'s turn</md-subheader>
+      <md-divider></md-divider>
+      <md-subheader>{{game.lastActor}} did {{game.lastPerformedAction}}</md-subheader>
+      <md-divider></md-divider>
+      <md-subheader>Cumulative Turn Score: {{game.cumulativeTurnScore}}</md-subheader>
+      <md-divider></md-divider>
     </div>
 
-    <md-divider></md-divider>
-        <md-subheader>Cumulative Turn Score: {{game.cumulativeTurnScore}}</md-subheader>
-    <md-divider></md-divider>
-    
-    <div v-if="availableButton('BROADCAST_CHOOSE_DICE') && (game.lastPerformedAction === 'COMMIT_ROLL_DICE' || game.lastPerformedAction === 'BROADCAST_CHOOSE_DICE')">
+      <div v-if="availableButton('BROADCAST_CHOOSE_DICE') && (game.lastPerformedAction === 'COMMIT_ROLL_DICE' || game.lastPerformedAction === 'BROADCAST_CHOOSE_DICE')">
         <md-divider></md-divider>
         <md-subheader v-if="isMyTurn">Select which dice to keep and score</md-subheader>
         <md-subheader v-else>{{currentTurnPlayer.displayName}} is selecting dice</md-subheader>
@@ -26,15 +28,6 @@
         :enabled="availableButton('BROADCAST_CHOOSE_DICE') && isMyTurn"
       />
     </div>
-
-    <md-divider></md-divider>
-
-    <div class="game-message">
-      <md-subheader>It is {{currentTurnPlayer.displayName}}'s turn</md-subheader>
-      <md-subheader>{{game.lastActor}} did {{game.lastPerformedAction}}</md-subheader>
-    </div>
-
-    <md-divider></md-divider>
 
     <div class="game-action-buttons">
       <md-tooltip v-if="!isMyTurn">It is not your turn</md-tooltip>
